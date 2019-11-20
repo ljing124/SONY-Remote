@@ -1,2 +1,2 @@
-# course_backup
-personal backup of code&amp;resources to school courses
+# SONY_Remote
+a simple demo to use Sony_CameraRemoteAPI
