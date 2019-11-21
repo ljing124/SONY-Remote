@@ -41,8 +41,7 @@
           <a href="javascript:void(0);" class="btn" id="b5" onclick="camera_shoot()">拍摄照片</a>
           <a href="javascript:void(0);" class="btn" id="b6" onclick="camera_recon()">开始录象</a>
           <a href="javascript:void(0);" class="btn" id="b7" onclick="camera_recoff()">停止录像</a>
-          <a href="javascript:void(0);" class="btn" id="b8" onclick="camera_debug()">调试</a>
-          <a href="javascript:void(0);" class="btn" id="b8" onclick="camera_frame()">画框</a>
+          <a href="javascript:void(0);" class="btn" id="b8" onclick="camera_cancelaf()">取消对焦</a>
         </div>
       </div>
       <div class="row">
@@ -54,542 +53,70 @@
     </div>
   </body>
 
-  <script type="shader-source" id="vertexShader">
-    attribute vec4 a_Position;
-    attribute vec2 a_TextCoord;
-    varying vec2 v_TexCoord;
-    void main(){
-      gl_Position = a_Position;
-      v_TexCoord = a_TextCoord;
-    }
-  </script>
-  
-  <script type="shader-source" id="fragmentShader">
-    precision mediump float;
-    uniform sampler2D u_Sampler;
-    varying vec2 v_TexCoord;
-    void main(){
-      gl_FragColor = texture2D(u_Sampler, v_TexCoord);
-    }
-  </script>
-
-  <script type="shader-source" id="fragmentShader_psdc">
-    precision mediump float;
-    varying vec2 v_TexCoord;
-    uniform sampler2D u_Sampler;
-    void main() {
-      vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-      if(originalColor[0]<0.25) {
-        gl_FragColor = vec4(0.0, originalColor[0]*4.0, 1.0, 1.0);
-      } else if(originalColor[0]>0.25 && originalColor[0]<=0.5) {
-        gl_FragColor = vec4(0.0, 1.0, 2.0-originalColor[0]*4.0, 1.0);
-      } else if(originalColor[0]>0.5 && originalColor[0]<=0.75) {
-        gl_FragColor = vec4(originalColor[0]*4.0-2.0, 1.0, 0.0, 1.0);
-      } else {
-        gl_FragColor = vec4(1.0, 4.0-originalColor[0]*4.0, 0.0, 1.0);
-      }
-    }
-  </script>
-
-  <script type="shader-source" id="fragmentShader_zeba">
-    precision highp float;
-    varying vec2 v_TexCoord;
-    uniform sampler2D u_Sampler;
-    void main() {
-      vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-      vec2 screenPos = v_TexCoord * vec2(500.0,500.0);
-      int length = int(screenPos[0]-screenPos[1])-6*int((screenPos[0]-screenPos[1])/6.0);
-      if(originalColor[0]+originalColor[1]+originalColor[2] > 2.1) {
-        if(length<4&&length>0 || length>-6&&length<-2){
-          gl_FragColor = originalColor;
-        } else {
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-        }
-      } else {
-        gl_FragColor = originalColor;
-      }
-    }
-  </script>
-
-  <script type="shader-source" id="fragmentShader_zeba2">
-      precision highp float;
-      varying vec2 v_TexCoord;
-      uniform sampler2D u_Sampler;
-      void main() {
-        vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-        vec2 screenPos = v_TexCoord * vec2(500.0,500.0);
-        int length = int(screenPos[0]-screenPos[1])-6*int((screenPos[0]-screenPos[1])/6.0);
-        if(originalColor[0]+originalColor[1]+originalColor[2] > 2.7) {
-          if(length<4&&length>0 || length>-6&&length<-2){
-            gl_FragColor = originalColor;
-          } else {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-          }
-        } else {
-          gl_FragColor = originalColor;
-        }
-      }
-    </script>
-
-  <script type="shader-source" id="fragmentShader_peak">
-    precision mediump float;
-    varying vec2 v_TexCoord;
-    uniform sampler2D u_Sampler;
-    void main() {
-      vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-      if(v_TexCoord.x>0.005 && v_TexCoord.x<0.995 && v_TexCoord.y>0.005 && v_TexCoord.y<0.995) {
-        vec4 laColor = texture2D(u_Sampler,v_TexCoord-vec2(0.005,0.0))
-                     + texture2D(u_Sampler,v_TexCoord-vec2(0.0,0.005))
-                     + texture2D(u_Sampler,v_TexCoord+vec2(0.005,0.0))
-                     + texture2D(u_Sampler,v_TexCoord+vec2(0.0,0.005))
-                     - 4.0 * originalColor;
-        if(laColor[0]+laColor[1]+laColor[2]>2.0) {
-          gl_FragColor = vec4(1.0,1.0,0.0,1.0);
-        } else {
-          gl_FragColor = originalColor;
-        }
-      } else {
-        gl_FragColor = originalColor;
-      }
-    }
-  </script>
-
-  <script type="shader-source" id="fragmentShader_peak2">
-      precision mediump float;
-      varying vec2 v_TexCoord;
-      uniform sampler2D u_Sampler;
-      void main() {
-        vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-        if(v_TexCoord.x>0.005 && v_TexCoord.x<0.995 && v_TexCoord.y>0.005 && v_TexCoord.y<0.995) {
-          vec4 laColor = texture2D(u_Sampler,v_TexCoord-vec2(0.005,0.0))
-                       + texture2D(u_Sampler,v_TexCoord-vec2(0.0,0.005))
-                       + texture2D(u_Sampler,v_TexCoord+vec2(0.005,0.0))
-                       + texture2D(u_Sampler,v_TexCoord+vec2(0.0,0.005))
-                       - 4.0 * originalColor;
-          if(laColor[0]+laColor[1]+laColor[2]>1.5) {
-            gl_FragColor = vec4(1.0,1.0,0.0,1.0);
-          } else {
-            gl_FragColor = originalColor;
-          }
-        } else {
-          gl_FragColor = originalColor;
-        }
-      }
-    </script>
-
-  <script type="shader-source" id="fragmentShader_wave">
-    precision highp float;
-    varying vec2 v_TexCoord;
-    uniform sampler2D u_Sampler;
-    void main() {
-      vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-      vec4 waveColor = vec4(0.0,0.0,0.0,1.0);
-      for(float i = 0.0; i<1.0; i+=0.01) {
-        vec4 tmpColor = texture2D(u_Sampler,vec2(v_TexCoord.x,i));
-        float tmpGray = (tmpColor[0] + tmpColor[1] + tmpColor[2]) / 3.0;
-        if(tmpGray>v_TexCoord.y-0.01 && tmpGray<v_TexCoord.y+0.01) {
-          waveColor += vec4(0.04,0.04,0.04,1.0);
-        }
-      }
-      gl_FragColor = originalColor*0.3 + waveColor*0.7;
-    }
-  </script>
-
-  <script type="shader-source" id="fragmentShader_wave2">
-      precision highp float;
-      varying vec2 v_TexCoord;
-      uniform sampler2D u_Sampler;
-      void main() {
-        if(v_TexCoord.x<0.75 && v_TexCoord.y<0.25) {   //gray
-          vec4 waveColor = vec4(0.0,0.0,0.0,1.0);
-          for(float i = 0.0; i<1.0; i+=0.025) {
-            vec4 tmpColor = texture2D(u_Sampler,vec2(v_TexCoord.x*1.33333333,i));
-            float tmpGray = (tmpColor[0] + tmpColor[1] + tmpColor[2]) / 3.0;
-            if(tmpGray>v_TexCoord.y*4.0-0.01 && tmpGray<v_TexCoord.y*4.0+0.01) {
-              waveColor += vec4(0.04,0.04,0.04,1.0);
-            }
-          }
-          gl_FragColor = waveColor;
-        } else if(v_TexCoord.x>0.75 && v_TexCoord.y>0.66666667) {  //red
-          vec4 waveColor = vec4(0.0,0.0,0.0,1.0);
-          for(float i = 0.0; i<1.0; i+=0.025) {
-            vec4 tmpColor = texture2D(u_Sampler,vec2((v_TexCoord.x-0.75)*4.0,i));
-            if(tmpColor[0]>(v_TexCoord.y-0.66666667)*3.0-0.02 && tmpColor[0]<(v_TexCoord.y-0.66666667)*3.0+0.02) {
-              waveColor += vec4(0.04,0.0,0.0,1.0);
-            }
-          }
-          gl_FragColor = waveColor;
-        } else if(v_TexCoord.x>0.75 && v_TexCoord.y<0.66666667 && v_TexCoord.y>0.33333333) {  //green
-          vec4 waveColor = vec4(0.0,0.0,0.0,1.0);
-          for(float i = 0.0; i<1.0; i+=0.025) {
-            vec4 tmpColor = texture2D(u_Sampler,vec2((v_TexCoord.x-0.75)*4.0,i));
-            if(tmpColor[0]>(v_TexCoord.y-0.33333333)*3.0-0.02 && tmpColor[0]<(v_TexCoord.y-0.33333333)*3.0+0.02) {
-              waveColor += vec4(0.0,0.04,0.0,1.0);
-            }
-          }
-          gl_FragColor = waveColor;
-        } else if(v_TexCoord.x>0.75 && v_TexCoord.y<0.33333333) {  //blue
-          vec4 waveColor = vec4(0.0,0.0,0.0,1.0);
-          for(float i = 0.0; i<1.0; i+=0.025) {
-            vec4 tmpColor = texture2D(u_Sampler,vec2((v_TexCoord.x-0.75)*4.0,i));
-            if(tmpColor[0]>v_TexCoord.y*3.0-0.02 && tmpColor[0]<v_TexCoord.y*3.0+0.02) {
-              waveColor += vec4(0.0,0.0,0.04,1.0);
-            }
-          }
-          gl_FragColor = waveColor;
-        } else {
-          gl_FragColor = texture2D(u_Sampler, vec2(v_TexCoord.x*1.33333333,(v_TexCoord.y-0.25)*1.33333333));
-        }
-      }
-    </script>
-
-  <script>
-
-  </script>
-
   <script type="text/javascript" src="./js/wgl.js"></script>
   <script type="text/javascript" src="./js/remote.js"></script>
 
-  <script type="text/javascript">
-    const canvas = document.querySelector("#livecanvas")
-    const fcanvas = document.querySelector("#framecanvas")
-    canvas.width = document.querySelector("#liveview").clientWidth;
-    canvas.height = document.querySelector("#liveview").clientHeight;
-    canvas.style.width = canvas.width + "px";
-    canvas.style.height = canvas.height + "px";
-    fcanvas.style.width = canvas.width + "px";
-    fcanvas.style.height = canvas.height + "px";
-    fcanvas.style.top = canvas.clientTop;
-    fcanvas.style.left = (document.getElementById("liveview").clientWidth - parseFloat(canvas.width))/2 + "px";
-    var gl = canvas.getContext("webgl")
-    var ctx = fcanvas.getContext("2d")
-    const vertexShaderSource = document.querySelector('#vertexShader').innerHTML
-    const vertexShader = gl.createShader(gl.VERTEX_SHADER)
-    gl.shaderSource(vertexShader, vertexShaderSource)
-    gl.compileShader(vertexShader)
-    var fragmentShaderSource = document.querySelector('#fragmentShader').innerHTML
-    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
-    gl.shaderSource(fragmentShader, fragmentShaderSource)
-    gl.compileShader(fragmentShader)
-    var program = gl.createProgram()
-    gl.attachShader(program, vertexShader)
-    gl.attachShader(program, fragmentShader)
-    gl.linkProgram(program)
-    gl.useProgram(program)
-    var n = initBuffers(gl, program);
-    //initTexture(gl, program, n, "./init.jpg");
-  </script>
-
-
-
   <script>
     var livefunc = 0;
-    var fshader = "fragmentShader";
-    function liveview_handler(func){
-      gl = canvas.getContext("webgl");
-      gl.shaderSource(vertexShader, vertexShaderSource);
-      gl.compileShader(vertexShader);
-      switch(func){
-        case 0: fshader = "fragmentShader"; break;  //原始
-        case 1: fshader = "fragmentShader_psdc"; break;  //伪色
-        case 3: fshader = "fragmentShader_zeba"; break;  //斑马70%
-        case 4: fshader = "fragmentShader_zeba2"; break;  //斑马90%
-        case 5: fshader = "fragmentShader_peak"; break;  //峰值low
-        case 6: fshader = "fragmentShader_peak2"; break;  //峰值high
-        case 7: fshader = "fragmentShader_wave"; break;  //波形全屏
-        case 8: fshader = "fragmentShader_wave2"; break;  //波形分屏
-        default: fshader = "fragmentShader"; break;  //原始
-      }
-      fragmentShaderSource = document.getElementById(fshader).innerHTML;
-      fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-      gl.shaderSource(fragmentShader, fragmentShaderSource);
-      gl.compileShader(fragmentShader);
-      program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      gl.useProgram(program);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);
-    }
-    function liveview_psdc(){
-      livefunc = (livefunc==0) ? 1 : 0;
-      liveview_handler(livefunc);
-    }
-    function liveview_zeba(){
-      if(livefunc==0) livefunc = 3;
-      else if(livefunc==3) livefunc = 4;
-      else livefunc = 0;
-      liveview_handler(livefunc);
-    }
-    function liveview_peak(){
-      if(livefunc==0) livefunc = 5;
-      else if(livefunc==5) livefunc = 6;
-      else livefunc = 0;
-      liveview_handler(livefunc);
-    }
-    function liveview_wave(){
-      if(livefunc==0) livefunc = 7;
-      else if(livefunc==7) livefunc = 8;
-      else livefunc = 0;
-      liveview_handler(livefunc);
-    }
-    function liveview_luts(){
-      livefunc = 0;
-      liveview_handler(0);
-    }
-  </script>
-
-  <script>
     var camera_module = "a7r3";
     var needset = false;
+    var cantouch = false;
     var resized = false;
     var infoon = false;
     var apiurl = "http://192.168.122.1:10000/sony/camera";
     var liveurl = "http://192.168.122.1:60152/liveviewstream?%211234%21%2a%3a%2a%3aimage%2fjpeg%3a%2a%21%21%21%21%21";
+    
+    window.onload = function(){
+      canvas = document.getElementById("livecanvas");
+      fcanvas = document.getElementById("framecanvas");
+      canvas.width = document.querySelector("#liveview").clientWidth;
+      canvas.height = document.querySelector("#liveview").clientHeight;
+      canvas.style.width = canvas.width + "px";
+      canvas.style.height = canvas.height + "px";
+      fcanvas.style.width = canvas.width + "px";
+      fcanvas.style.height = canvas.height + "px";
+      fcanvas.style.top = canvas.clientTop;
+      fcanvas.style.left = (document.getElementById("liveview").clientWidth - parseFloat(canvas.width))/2 + "px";
+      fcanvas.addEventListener('click',(e)=>{ camera_touchaf(e) });
+      gl = canvas.getContext("webgl")
+      ctx = fcanvas.getContext("2d")
+      vertexShader = gl.createShader(gl.VERTEX_SHADER)
+      gl.shaderSource(vertexShader, vertexShaderSource)
+      gl.compileShader(vertexShader)
+      fragmentShaderSource = fragmentShader_raw
+      fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+      gl.shaderSource(fragmentShader, fragmentShaderSource)
+      gl.compileShader(fragmentShader)
+      program = gl.createProgram()
+      gl.attachShader(program, vertexShader)
+      gl.attachShader(program, fragmentShader)
+      gl.linkProgram(program)
+      gl.useProgram(program)
+      n = initBuffers(gl, program);
+    }
+
     function modulechange(){
       var moduleselect = document.getElementById("module");
       var index = moduleselect.selectedIndex;
       camera_module = moduleselect.options[index].value;
       switch(camera_module){
         case "a7r3": needset = false;
+                     cantouch = false;
                      apiurl = "http://192.168.122.1:10000/sony/camera"; 
                      liveurl = "http://192.168.122.1:60152/liveviewstream?%211234%21%2a%3a%2a%3aimage%2fjpeg%3a%2a%21%21%21%21%21"; break;
         case "rx1004": needset = true;
+                       cantouch = true;
                        apiurl = "http://192.168.122.1:8080/sony/camera/"; 
                        liveurl = "http://192.168.122.1:8080/liveview/liveviewstream"; break;
         default: needset = false;
+                 cantouch = false;
                  apiurl = "http://192.168.122.1:10000/sony/camera";
                  liveurl = "http://192.168.122.1:60152/liveviewstream?%211234%21%2a%3a%2a%3aimage%2fjpeg%3a%2a%21%21%21%21%21";
       }
       document.getElementById("b1").style.display = needset ? "block" : "none";
       document.getElementById("b4").style.display = needset ? "block" : "none";
-      console.log(camera_module)
-    }
-    function liveview_info(){
-      fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-      body: JSON.stringify({"method": "getFNumber", "params": [], "id": 1, "version": "1.0"})})
-      .then((response)=>{
-        response.json().then((data)=>{
-          document.getElementById("f").innerHTML = data.result[0];
-        })
-      });
-      fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-      body: JSON.stringify({"method": "getShutterSpeed", "params": [], "id": 1, "version": "1.0"})})
-      .then((response)=>{
-        response.json().then((data)=>{
-          document.getElementById("s").innerHTML = data.result[0];
-        })
-      });
-      fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-      body: JSON.stringify({"method": "getIsoSpeedRate", "params": [], "id": 1, "version": "1.0"})})
-      .then((response)=>{
-        response.json().then((data)=>{ 
-          document.getElementById("i").innerHTML = data.result[0];
-        })
-      });
-      if(infoon) setTimeout(function(){ liveview_info();},1000);
-    }
-    function camera_connect(){
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-          //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"startRecMode","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
-    }
-    function camera_resize(imgurl){
-      var tmpimg = new Image();
-      resized = true;
-      tmpimg.src = imgurl;
-      tmpimg.onload = function(){
-        var tmpheight = tmpimg.height;
-        var tmpwidth = tmpimg.width; 
-        var scaleh = document.getElementById("liveview").clientHeight / tmpheight;
-        var scalew = document.getElementById("liveview").clientWidth / tmpwidth;
-        canvas.style.width = tmpwidth * ((scaleh>scalew) ? scalew : scaleh) + "px";
-        canvas.style.height = tmpheight * ((scaleh>scalew) ? scalew : scaleh) + "px";
-        canvas.style.top =  (document.getElementById("liveview").clientHeight - parseFloat(canvas.style.height))/2 + "px";
-        console.log(canvas.style.width)
-        fcanvas.style.width = canvas.style.width;
-        fcanvas.style.height = canvas.style.height;
-        fcanvas.style.left = (document.getElementById("liveview").clientWidth - parseFloat(canvas.style.width))/2 + "px";
-        fcanvas.style.top = canvas.style.top;
-      }
-    }
-    async function camera_livestream(){
-      const res = await fetch(liveurl)
-      let reader = res.body.getReader()
-      let chunk = 0
-      let offset = 0
-      let rest = new Uint8Array
-      while (true) {
-        const result = await reader.read()
-          if (result.done) break
-        chunk += result.value.length
-        if(chunk>16*1024*1024){reader.cancel(); setTimeout(function(){ camera_livestream();},10);}
-        let buffer = new Uint8Array(offset+result.value.length)
-        buffer.set(rest)
-        buffer.set(result.value,offset)
-        while(buffer.length>65536){
-          let imgsize = buffer[12] * 65536 + buffer[13] * 256 + buffer[14]
-          let padsize = buffer[15] + imgsize
-          let imgbuffer = buffer.slice(136,136+padsize)
-          if(buffer[1]==1){
-            let imgblob = new Blob([imgbuffer],{ type: "image/jpeg" });
-            let imgurl = URL.createObjectURL(imgblob);
-            if(!resized) camera_resize(imgurl);
-            initTexture(gl, program, n, imgurl);
-          }else{
-            fcanvas.width = 1000;
-            let framecnt = buffer[18] * 256 + buffer[19];
-            for(let i=0;i<framecnt;i++){
-              let frameleft = imgbuffer[i*16] * 256 + imgbuffer[i*16+1];
-              let frametop = imgbuffer[i*16+2] * 256 + imgbuffer[i*16+3];
-              let frameright = imgbuffer[i*16+4] * 256 + imgbuffer[i*16+5];
-              let framebottom = imgbuffer[i*16+6] * 256 + imgbuffer[i*16+7];
-              ctx.strokeStyle = "green"
-              ctx.lineWidth = 2
-              ctx.rect(frameleft/10,frametop/10,(frameright-frameleft)/10,(framebottom-frametop)/10);
-              ctx.stroke();
-            }
-          }
-          buffer = buffer.slice(padsize+136)
-          offset = buffer.length
-        }
-        rest = buffer.slice(0)
-        offset = rest.length
-      }
-    }
-    function camera_liveon(){
-      resized = false;
-      infoon = true;
-      let payload = {"version":"1.0","id":1,"method":"startLiveview","params":[]};
-      fetch(apiurl,{
-        method:'POST',
-        mode: 'no-cors',
-        credentials: 'include',
-        headers: {'Content-Type': 'text/plain;charset=UTF-8'},
-        body: JSON.stringify(payload)
-      })
-      .then(()=>{
-        camera_livestream();
-        setTimeout(function(){ liveview_info();},500);
-      });
-    }
-    function camera_liveoff(){
-      resized = false;
-      infoon = false;
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-          //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"stopLiveview","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
-    }
-    function camera_disconn(){
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-          //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"stopRecMode","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
-    }
-    function camera_acttake(){
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-        //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-          setTimeout(function(){ camera_livestream();},1000);
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"actTakePicture","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
-    }
-    function camera_shoot(){
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-          //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-          camera_acttake();
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"actHalfPressShutter","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
-    }
-    function camera_recon(){
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-          //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"startMovieRec","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
-    }
-    function camera_recoff(){
-      xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function(){
-        if(xmlhttp.readyState==4 && xmlhttp.status==200){
-          //document.getElementById("infoview").innerHTML=xmlhttp.responseText;
-        }
-      }
-      var payload = {"version":"1.0","id":1,"method":"stopMovieRec","params":[]};
-      xmlhttp.open("POST",apiurl,true);
-      xmlhttp.send(JSON.stringify(payload));
+      document.getElementById("b8").style.display = cantouch ? "block" : "none";
     }
   </script>
 
-  <script>
-  function camera_debug(){
-    fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-    body: JSON.stringify({"method": "setLiveviewFrameInfo", "params": [{"frameInfo": true}], "id": 1, "version": "1.0"})})
-    .then((response)=>{
-      response.json().then((data)=>{
-        console.log(data)
-      })
-    });
-  }
-  function camera_frame(){
-    fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-    body: JSON.stringify({"method": "getEvent", "params": [true], "id": 1, "version": "1.3"})})
-    .then((response)=>{
-      response.json().then((data)=>{
-        console.log(data)
-      })
-    });
-  }
-  </script>
-
-  <script>
-    fcanvas.addEventListener('click',(e)=>{
-      //if(!infoon) return;
-      let x = e.pageX - canvas.getBoundingClientRect().left;
-      let y = e.pageY - canvas.getBoundingClientRect().top;
-      x = Math.floor(x / parseFloat(canvas.style.width) * 1000) / 10 ;
-      y = Math.floor(y / parseFloat(canvas.style.height) * 1000) / 10 ;
-      console.log(x,y)
-      fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-      body: JSON.stringify({"method": "setTouchAFPosition", "params": [x,y], "id": 1, "version": "1.0"})})
-      .then((response)=>{
-        response.json().then((data)=>{
-          console.log(data)
-          console.log(data.result[1].AFResult)
-        })
-      });
-    });
-  </script>
-  
 </html>

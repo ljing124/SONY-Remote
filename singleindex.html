@@ -428,23 +428,19 @@
       fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
       body: JSON.stringify({"method": "getFNumber", "params": [], "id": 1, "version": "1.0"})})
       .then((response)=>{
-        response.json().then((data)=>{
-          if(data.result) document.getElementById("f").innerHTML = data.result[0];
-        })
-      });
-      fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-      body: JSON.stringify({"method": "getShutterSpeed", "params": [], "id": 1, "version": "1.0"})})
-      .then((response)=>{
-        response.json().then((data)=>{
-          if(data.result) document.getElementById("s").innerHTML = data.result[0];
-        })
-      });
-      fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-      body: JSON.stringify({"method": "getIsoSpeedRate", "params": [], "id": 1, "version": "1.0"})})
-      .then((response)=>{
-        response.json().then((data)=>{ 
-          if(data.result) document.getElementById("i").innerHTML = data.result[0];
-        })
+        fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
+        body: JSON.stringify({"method": "getShutterSpeed", "params": [], "id": 1, "version": "1.0"})})
+        .then((response)=>{
+          fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
+          body: JSON.stringify({"method": "getIsoSpeedRate", "params": [], "id": 1, "version": "1.0"})})
+          .then((response)=>{
+            response.json().then((data)=>{ 
+              if(data.result) document.getElementById("i").innerHTML = data.result[0];
+            })
+          });
+          response.json().then((data)=>{ if(data.result) document.getElementById("s").innerHTML = data.result[0]; })
+        });
+        response.json().then((data)=>{ if(data.result) document.getElementById("f").innerHTML = data.result[0]; })
       });
       if(infoon) setTimeout(function(){ liveview_info();},1000);
     }
