@@ -1,1 +1,27 @@
+body{
+    background: #111111; 
+}
 
+a{
+    background: #EEEEEE;
+    color: black;
+}
+
+a:hover { background: #AAAAAA; }
+a:active {background: #CCCCCC; }
+
+.row{
+    margin: 1vw 0vw 1vw 0vw;
+    text-align: center; 
+}
+.btn{
+    display:block;
+    height: 2vw;
+    padding: 1.5vw 2vw 1.5vw 2vw;
+    margin: 1vw 1vw 1vw 1vw;
+    font-size: 2vw;
+    border-radius: 5px;
+    text-align: center; 
+    align-items: center;
+    text-decoration: none; 
+}

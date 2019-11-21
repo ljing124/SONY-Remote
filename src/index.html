@@ -4,27 +4,7 @@
     <title>SONY Camera Remote</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <style type="text/css">
-      body { background: #111111; }
-      a { background: #EEEEEE; color: black; }
-      a:hover { background: #AAAAAA; }
-      a:active {background: #CCCCCC; }
-      .row{
-        margin: 1vw 0vw 1vw 0vw;
-        text-align: center; 
-      }
-      .btn{
-        display:block;
-        height: 2vw;
-        padding: 1.5vw 2vw 1.5vw 2vw;
-        margin: 1vw 1vw 1vw 1vw;
-        font-size: 2vw;
-        border-radius: 5px;
-        text-align: center; 
-        align-items: center;
-        text-decoration: none; 
-      }
-      </style>
+    <link href="./css/main.css" rel="stylesheet" type="text/css" />
   </head>
   <body >
     <div class="container">
@@ -261,17 +241,6 @@
         } else {
           gl_FragColor = texture2D(u_Sampler, vec2(v_TexCoord.x*1.33333333,(v_TexCoord.y-0.25)*1.33333333));
         }
-        
-        //vec4 originalColor = texture2D(u_Sampler, v_TexCoord);
-        //vec4 waveColor = vec4(0.0,0.0,0.0,1.0);
-        //for(float i = 0.0; i<1.0; i+=0.01) {
-        //  vec4 tmpColor = texture2D(u_Sampler,vec2(v_TexCoord.x,i));
-        //  float tmpGray = (tmpColor[0] + tmpColor[1] + tmpColor[2]) / 3.0;
-        //  if(tmpGray>v_TexCoord.y-0.01 && tmpGray<v_TexCoord.y+0.01) {
-        //    waveColor += vec4(0.04,0.04,0.04,1.0);
-        //  }
-        //}
-        //gl_FragColor = originalColor*0.3 + waveColor*0.7;
       }
     </script>
 
