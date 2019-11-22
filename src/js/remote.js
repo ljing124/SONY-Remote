@@ -134,10 +134,10 @@ async function camera_livestream(){
     }
 }
 
-
 /**
- * 实时光圈、快门、ISO显示
+ * 实时光圈、快门、ISO显示(废弃)
  */
+/*
 function liveview_info(){
     fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
     body: JSON.stringify({"method": "getFNumber", "params": [], "id": 1, "version": "1.0"})})
@@ -158,56 +158,12 @@ function liveview_info(){
     });
     if(infoon) setTimeout(function(){ liveview_info();},1000);
 }
+*/
 
 /**
- * 获取光圈设置范围
+ * 获取ISO设置范围(废弃)
  */
-function camera_getf(){
-    if(document.getElementById("setpanel").style.display == "block"){
-        document.getElementById("setpanel").style.display = "none";
-        document.getElementById("fsipanel").innerHTML = "";
-        return;
-    }
-    fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-    body: JSON.stringify({"method": "getAvailableFNumber", "params": [], "id": 1, "version": "1.0"})})
-    .then((response)=>{
-        response.json().then((data)=>{
-            if(data.result[1].length>0){
-                document.getElementById("setpanel").style.display = "block";
-                for(let i=0;i<data.result[1].length;i++){
-                    document.getElementById("fsipanel").innerHTML += `<a href="javascript:void(0);" class="btn" style="display:inline-block;" onclick="camera_setf('`+ window.btoa(data.result[1][i]) +"\')\">F"+data.result[1][i]+"</a>";
-                }
-            }
-        })
-    });
-}
-
-/**
- * 获取快门设置范围
- */
-function camera_gets(){
-    if(document.getElementById("setpanel").style.display == "block"){
-        document.getElementById("setpanel").style.display = "none";
-        document.getElementById("fsipanel").innerHTML = "";
-        return;
-    }
-    fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
-    body: JSON.stringify({"method": "getAvailableShutterSpeed", "params": [], "id": 1, "version": "1.0"})})
-    .then((response)=>{
-        response.json().then((data)=>{
-            if(data.result[1].length>0){
-                document.getElementById("setpanel").style.display = "block";
-                for(let i=0;i<data.result[1].length;i++){
-                    document.getElementById("fsipanel").innerHTML += `<a href="javascript:void(0);" class="btn" style="display:inline-block; margin:0.5vw 0.5vw 0.5vw 0.5vw; padding:1vw 1vw 1vw 1vw;" onclick="camera_sets('`+ window.btoa(data.result[1][i]) +"\')\">"+data.result[1][i]+"</a>";
-                }
-            }
-        })
-    });
-}
-
-/**
- * 获取ISO设置范围
- */
+/*
 function camera_geti(){
     if(document.getElementById("setpanel").style.display == "block"){
         document.getElementById("setpanel").style.display = "none";
@@ -226,6 +182,79 @@ function camera_geti(){
             }
         })
     });
+}
+*/
+
+/**
+ * 实时光圈、快门、ISO显示
+ */
+function liveview_info(){
+    fetch(apiurl,{method:'POST', credentials: 'include', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, 
+    body: JSON.stringify({"method": "getEvent", "params": [false], "id": 1, "version": "1.0"})})
+    .then((response)=>{
+        response.json().then((data)=>{
+            if(data.result){
+                document.getElementById("f").innerHTML = data.result[27].currentFNumber
+                document.getElementById("s").innerHTML = data.result[32].currentShutterSpeed
+                document.getElementById("i").innerHTML = data.result[29].currentIsoSpeedRate
+                flist = data.result[27].fNumberCandidates
+                slist = data.result[32].shutterSpeedCandidates
+                ilist = data.result[29].isoSpeedRateCandidates
+            }
+        })
+    })
+    if(infoon) setTimeout(function(){ liveview_info();},1000)
+}
+
+/**
+ * 显示光圈设置面板
+ */
+function camera_getf(){
+    if(document.getElementById("setpanel").style.display == "block"){
+        document.getElementById("setpanel").style.display = "none";
+        document.getElementById("fsipanel").innerHTML = "";
+        return;
+    }
+    if(flist.length>0){
+        for(let i=0;i<flist.length;i++){
+            document.getElementById("fsipanel").innerHTML += `<a href="javascript:void(0);" class="btn" style="display:inline-block;" onclick="camera_setf('`+ window.btoa(flist[i]) +"\')\">F"+flist[i]+"</a>";
+        }
+        document.getElementById("setpanel").style.display = "block";
+    }
+}
+
+/**
+ * 显示快门设置面板
+ */
+function camera_gets(){
+    if(document.getElementById("setpanel").style.display == "block"){
+        document.getElementById("setpanel").style.display = "none";
+        document.getElementById("fsipanel").innerHTML = "";
+        return;
+    }
+    if(slist.length>0){
+        for(let i=0;i<slist.length;i++){
+            document.getElementById("fsipanel").innerHTML += `<a href="javascript:void(0);" class="btn" style="display:inline-block; margin:0.5vw 0.5vw 0.5vw 0.5vw; padding:1vw 1vw 1vw 1vw;" onclick="camera_sets('`+ window.btoa(slist[i]) +"\')\">"+slist[i]+"</a>";
+        }
+        document.getElementById("setpanel").style.display = "block";
+    }
+}
+
+/**
+ * 显示ISO设置面板
+ */
+function camera_geti(){
+    if(document.getElementById("setpanel").style.display == "block"){
+        document.getElementById("setpanel").style.display = "none";
+        document.getElementById("fsipanel").innerHTML = "";
+        return;
+    }
+    if(ilist.length>0){
+        for(let i=0;i<ilist.length;i++){
+            document.getElementById("fsipanel").innerHTML += `<a href="javascript:void(0);" class="btn" style="display:inline-block; padding:1vw 1.5vw 1vw 1.5vw;" onclick="camera_seti('`+ window.btoa(ilist[i]) +"\')\">"+ilist[i]+"</a>";
+        }
+        document.getElementById("setpanel").style.display = "block";
+    }
 }
 
 /**

@@ -41,7 +41,7 @@
           <a href="javascript:void(0);" class="btn" id="b5" onclick="camera_shoot()">拍摄照片</a>
           <a href="javascript:void(0);" class="btn" id="b6" onclick="camera_recon()">开始录象</a>
           <a href="javascript:void(0);" class="btn" id="b7" onclick="camera_recoff()">停止录像</a>
-          <a href="javascript:void(0);" class="btn" id="b8" onclick="camera_cancelaf()">取消对焦</a>
+          <a href="javascript:void(0);" class="btn" id="b8" onclick="camera_cancelaf()" style="display:none;">取消对焦</a>
         </div>
       </div>
       <div class="row">
@@ -63,6 +63,9 @@
     var cantouch = false;
     var resized = false;
     var infoon = false;
+    var flist = [];
+    var slist = [];
+    var ilist = [];
     var apiurl = "http://192.168.122.1:10000/sony/camera";
     var liveurl = "http://192.168.122.1:60152/liveviewstream?%211234%21%2a%3a%2a%3aimage%2fjpeg%3a%2a%21%21%21%21%21";
     
