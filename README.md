@@ -4,7 +4,7 @@
 a simple demo to use Sony_CameraRemoteAPI
 ## 背景 BACKGROUND
 本项目基于SONY官方提供的SDK开发：https://developer.sony.com/develop/cameras/  
-该API使用HTML+JSON方式控制相机参数以及传输图像，使用webgl进行预览画面的实时处理
+该项目使用HTML+JSON方式控制相机参数以及传输图像，使用webgl进行预览画面的实时处理
 SONY官方的手机控制APP仅提供基本的拍摄控制和照片浏览功能，本项目针对更多的画面辅助监看功能进行了简单的实现  
 在大部分SONY微单和RX设备上支持曝光模式调整、参数调整、遥控拍摄、画面预览，在部分较旧的相机型号上支持点击对焦  
 该SKD目前已停止后续更新，但大部分设备(包括较新的ILCE-7RM3和RX100Ⅶ)仍能够正常使用这些API  
